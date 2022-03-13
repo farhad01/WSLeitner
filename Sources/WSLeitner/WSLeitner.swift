@@ -1,6 +1,9 @@
-public struct WSLeitner {
-    public private(set) var text = "Hello, World!"
+//
+//  Created by farhad jebelli on 12/03/2022.
+//
 
-    public init() {
-    }
+import Foundation
+
+public struct WSLeitner<Card: CardProtocol> {
+    private var boxes: [OrderedLinkedList<Card>]
 }
