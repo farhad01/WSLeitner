@@ -25,12 +25,10 @@ class OrderedLinkedListTest: XCTestCase {
 
     func testListIsOrdered_whenInsertNode() throws {
         let list = OrderedLinkedList<Int>()
+        let random = [5,1,3,4,2]
+        random.forEach(list.insert(_:))
         
-        list.insert(1)
-        list.insert(3)
-        list.insert(2)
-        
-        XCTAssertEqual(Array(list), [3, 2, 1])
+        XCTAssertEqual(Array(list), [5, 4, 3, 2, 1])
         
     }
     

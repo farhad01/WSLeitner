@@ -7,29 +7,32 @@
 
 import Foundation
 
-class OrderedLinkedList<Element: Comparable>: Sequence {
+protocol ListItemRemovable {
+    func remove()
+}
+
+final class OrderedLinkedList<Element: Comparable>: Sequence {
     typealias NodeElement = Node<Element>
-    fileprivate var first: NodeElement?
-    private var last: NodeElement?
+    private var firstNode: NodeElement?
+    private var lastNode: NodeElement?
     
-    var isEmpty: Bool {
-        first == nil
-    }
+    var first: Element? { firstNode?.element }
+    var last: Element? { lastNode?.element }
+    var isEmpty: Bool { firstNode == nil }
     
     init(list: [Element] = []) {
         list.forEach(insert)
     }
     
-    
     func insert(_ element: Element) {
-        if var node = first {
+        if var node = firstNode {
             while node.element > element {
                 if let next = node.next {
                     node = next
                 } else {
-                    let node = NodeElement(element: element, privies: node, next: nil)
-                    node.next = node
-                    last = node
+                    let newNode = NodeElement(element: element, privies: node, next: nil)
+                    node.next = newNode
+                    lastNode = newNode
                     return
                 }
             }
@@ -40,74 +43,44 @@ class OrderedLinkedList<Element: Comparable>: Sequence {
             } else {
                 let newNode = NodeElement(element: element, privies: nil, next: node)
                 node.previous = newNode
-                first = newNode
+                firstNode = newNode
             }
         } else {
-            first = NodeElement(element: element, privies: nil, next: nil)
-            last = first
+            firstNode = NodeElement(element: element, privies: nil, next: nil)
+            lastNode = firstNode
         }
     }
-        
+    
     func makeIterator() -> OrderedLinkedListIterator<Element> {
-        OrderedLinkedListIterator<Element>(self)
+        OrderedLinkedListIterator<Element>(self, initialNode: firstNode)
     }
     
-    fileprivate func remove(_ node: NodeElement) {
-        if first === last, first === node {
-            first = nil
-            last = nil
+    func remove(_ node: NodeElement) {
+        if firstNode === lastNode, firstNode === node {
+            firstNode = nil
+            lastNode = nil
             return
         }
         
-        if first === node {
+        if firstNode === node {
             let next = node.next
-            first = next
+            firstNode = next
             next?.previous = nil
             return
         }
-        if last === node {
+        if lastNode === node {
             let previous = node.previous
-            last = previous
+            lastNode = previous
             previous?.next = nil
             return
         }
         
-        if first !== node && last !== node {
+        if firstNode !== node && lastNode !== node {
             let next = node.next
             let previous = node.previous
             
             next?.previous = previous
             previous?.next = next
-        }
-    }
-}
-
-class OrderedLinkedListIterator<Element: Comparable>: IteratorProtocol {
-    
-    typealias NodeElement = Node<Element>
-    
-    private let list: OrderedLinkedList<Element>
-    private let initialNode: NodeElement?
-    private var node: NodeElement?
-    
-    internal init(_ list: OrderedLinkedList<Element>)
-    {
-        self.list = list
-        self.initialNode = list.first
-    }
-    
-    func next() -> Element? {
-        if node == nil {
-            node = initialNode
-        } else {
-            node = node?.next
-        }
-        return node?.element
-    }
-    
-    func remove() {
-        if let node = node {
-            list.remove(node)
         }
     }
 }

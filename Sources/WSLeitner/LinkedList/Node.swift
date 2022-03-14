@@ -4,7 +4,7 @@
 
 import Foundation
 
-class Node<Element> {
+final class Node<Element> {
     
     let element: Element
     var previous: Node?

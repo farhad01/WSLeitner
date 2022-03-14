@@ -6,16 +6,207 @@ import XCTest
 @testable import WSLeitner
 
 final class WSLeitnerTests: XCTestCase {
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct
-        // results.
-        //XCTAssertEqual(WSLeitner<TestCard>(), "Hello, World!")
+    
+    func testPicksCardFromEach25DayBox() throws {
+        
+        let dateProvider = TestDateProvider(now: Date())
+        
+        let initCards = [TestCard(reviewTime: dateProvider.createDate(daysAgo: 1), box: .daily, id: 0),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 3), box: .each3Day, id: 1),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 5), box: .each5Day, id: 2),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 10), box: .each10Day, id: 3),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 25), box: .each25Day, id: 4)]
+        
+        let leitner = Leitner<TestDelegate>(cards: initCards, now: dateProvider)
+        let session = leitner.next()
+        XCTAssertEqual(session?.card.id, 4)
+    }
+    
+    func testPicksCardFromEach10DayBox() throws {
+        
+        let dateProvider = TestDateProvider(now: Date())
+        
+        let initCards = [TestCard(reviewTime: dateProvider.createDate(daysAgo: 1), box: .daily, id: 0),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 3), box: .each3Day, id: 1),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 5), box: .each5Day, id: 2),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 10), box: .each10Day, id: 3),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 1), box: .each25Day, id: 4)]
+        
+        let leitner = Leitner<TestDelegate>(cards: initCards, now: dateProvider)
+        let session = leitner.next()
+        XCTAssertEqual(session?.card.id, 3)
+    }
+    
+    func testPicksCardFromEach5DayBox() throws {
+        
+        let dateProvider = TestDateProvider(now: Date())
+        
+        let initCards = [TestCard(reviewTime: dateProvider.createDate(daysAgo: 1), box: .daily, id: 0),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 3), box: .each3Day, id: 1),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 5), box: .each5Day, id: 2),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 1), box: .each10Day, id: 3),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 1), box: .each25Day, id: 4)]
+        
+        let leitner = Leitner<TestDelegate>(cards: initCards, now: dateProvider)
+        let session = leitner.next()
+        XCTAssertEqual(session?.card.id, 2)
+    }
+    
+    func testPicksCardFromEach3DayBox() throws {
+        
+        let dateProvider = TestDateProvider(now: Date())
+        
+        let initCards = [TestCard(reviewTime: dateProvider.createDate(daysAgo: 1), box: .daily, id: 0),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 3), box: .each3Day, id: 1),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 1), box: .each5Day, id: 2),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 1), box: .each10Day, id: 3),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 1), box: .each25Day, id: 4)]
+        
+        let leitner = Leitner<TestDelegate>(cards: initCards, now: dateProvider)
+        let session = leitner.next()
+        XCTAssertEqual(session?.card.id, 1)
+    }
+    
+    func testPicksCardFromEachDayBox() throws {
+        
+        let dateProvider = TestDateProvider(now: Date())
+        
+        let initCards = [TestCard(reviewTime: dateProvider.createDate(daysAgo: 1), box: .daily, id: 0),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 1), box: .each3Day, id: 1),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 1), box: .each5Day, id: 2),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 1), box: .each10Day, id: 3),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 1), box: .each25Day, id: 4)]
+        
+        let leitner = Leitner<TestDelegate>(cards: initCards, now: dateProvider)
+        let session = leitner.next()
+        XCTAssertEqual(session?.card.id, 0)
+    }
+    
+    func testPicksCardOrderIsFromOldToNew() throws {
+        let dateProvider = TestDateProvider(now: Date())
+        
+        let initCards = [TestCard(reviewTime: dateProvider.createDate(daysAgo: 1), box: .daily, id: 0),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 2), box: .daily, id: 1),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 3), box: .daily, id: 2),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 4), box: .daily, id: 3),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 5), box: .daily, id: 4)]
+            .shuffled()
+
+        let leitner = Leitner<TestDelegate>(cards: initCards, now: dateProvider)
+        
+        var session = leitner.next()
+        XCTAssertEqual(session?.card.id, 4)
+        
+        session?.failure()
+        
+        session = leitner.next()
+        XCTAssertEqual(session?.card.id, 3)
+        session?.failure()
+        
+        session = leitner.next()
+        XCTAssertEqual(session?.card.id, 2)
+        session?.failure()
+        
+        session = leitner.next()
+        XCTAssertEqual(session?.card.id, 1)
+        session?.failure()
+        
+        session = leitner.next()
+        XCTAssertEqual(session?.card.id, 0)
+    }
+    
+    func testMovingCardToNextBoxIsCorrect() throws {
+        let dateProvider = TestDateProvider(now: Date())
+        
+        let initCards = [TestCard(reviewTime: dateProvider.createDate(daysAgo: 1), box: .daily, id: 0)]
+        
+        let leitner = Leitner<TestDelegate>(cards: initCards, now: dateProvider)
+        var session = leitner.next()
+        XCTAssertEqual(session?.card.id, 0)
+        session?.success()
+        session = leitner.next()
+        XCTAssertNil(session)
+        
+        dateProvider.now = Date().advanced(by: 72 * 60 * 60)
+        session = leitner.next()
+        XCTAssertEqual(session?.card.id, 0)
+    }
+    
+    func testDelegateCalls_whenSuccess() throws {
+        let expectation = expectation(description: "delegate callback")
+        expectation.expectedFulfillmentCount = 1
+        expectation.assertForOverFulfill = true
+        
+        let dateProvider = TestDateProvider(now: Date())
+        
+        let initCards = [TestCard(reviewTime: dateProvider.createDate(daysAgo: 3), box: .each3Day, id: 0)]
+        
+        let leitner = Leitner<TestDelegate>(cards: initCards, now: dateProvider)
+        let delegate = TestDelegate(callback: { card in
+            if card.box == .each5Day {
+                expectation.fulfill()
+            }
+        })
+        leitner.delegate = delegate
+        let session = leitner.next()
+        session?.success()
+        
+        waitForExpectations(timeout: 0)
+    }
+    
+    func testDelegateCalls_whenFail() throws {
+        let expectation = expectation(description: "delegate callback")
+        expectation.expectedFulfillmentCount = 1
+        expectation.assertForOverFulfill = true
+        
+        let dateProvider = TestDateProvider(now: Date())
+        
+        let initCards = [TestCard(reviewTime: dateProvider.createDate(daysAgo: 3), box: .each3Day, id: 0)]
+        
+        let leitner = Leitner<TestDelegate>(cards: initCards, now: dateProvider)
+        let delegate = TestDelegate(callback: { card in
+            if card.box == .daily {
+                expectation.fulfill()
+            }
+        })
+        leitner.delegate = delegate
+        let session = leitner.next()
+        session?.failure()
+        
+        waitForExpectations(timeout: 0)
     }
 }
 
-private struct TestCard: CardProtocol {    
+private class TestDateProvider: CurrentDateProviding {
+    var now: Date
+    init(now: Date) {
+        self.now = now
+    }
+    
+    func tick() {
+        now = now.advanced(by: 10)
+    }
+    
+    func createDate(daysAgo n: Double) -> Date{
+        now.advanced(by: -n * 24 * 60 * 60)
+    }
+}
+
+private struct TestCard: CardProtocol {
     var reviewTime: Date
-    var box: Int
+    var box: Box
     var id: Int
+}
+
+private class TestDelegate: LeitnerCardDelegate {
+    
+    var callback: (TestCard) -> Void
+    
+    internal init(callback: @escaping (TestCard) -> Void) {
+        self.callback = callback
+    }
+    
+    func update(card: TestCard) {
+        callback(card)
+    }
 }
