@@ -64,4 +64,28 @@ class OrderedLinkedListTest: XCTestCase {
         iterator.remove()
         XCTAssertEqual(Array(list), [])
     }
+    
+    func testRemove() {
+        let list = OrderedLinkedList<Int>(list: [1, 2, 3, 4, 5])
+        
+        list.remove(5)
+        list.remove(3)
+        list.remove(4)
+        list.remove(2)
+        
+        XCTAssertEqual(Array(list), [1])
+        
+        list.remove(3)
+        
+        XCTAssertEqual(Array(list), [1])
+        
+        list.remove(1)
+        
+        XCTAssertEqual(Array(list), [])
+        
+        list.remove(1)
+        
+        XCTAssertEqual(Array(list), [])
+        
+    }
 }

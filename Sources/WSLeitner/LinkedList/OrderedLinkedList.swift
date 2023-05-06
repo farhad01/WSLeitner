@@ -55,6 +55,12 @@ final class OrderedLinkedList<Element: Comparable>: Sequence {
         OrderedLinkedListIterator<Element>(self, initialNode: firstNode)
     }
     
+    func remove(_ element: Element) {
+        if let node = findNode(element) {
+            remove(node)
+        }
+    }
+    
     func remove(_ node: NodeElement) {
         if firstNode === lastNode, firstNode === node {
             firstNode = nil
@@ -82,5 +88,17 @@ final class OrderedLinkedList<Element: Comparable>: Sequence {
             next?.previous = previous
             previous?.next = next
         }
+    }
+    
+    private func findNode(_ element: Element, node: NodeElement? = nil) -> NodeElement? {
+        if let node = node ?? firstNode {
+            if node.element == element  {
+                return node
+            }
+            if node !== lastNode {
+                return findNode(element, node: node.next)
+            }
+        }
+        return nil
     }
 }

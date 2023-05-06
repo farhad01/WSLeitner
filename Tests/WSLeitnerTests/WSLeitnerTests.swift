@@ -115,7 +115,7 @@ final class WSLeitnerTests: XCTestCase {
         XCTAssertEqual(session?.card.id, 0)
     }
     
-    func testMovingCardToNextBoxIsCorrect() throws {
+    func testMovingCardToNextBoxIsCorrect_whenSuccess() throws {
         let dateProvider = TestDateProvider(now: Date())
         
         let initCards = [TestCard(reviewTime: dateProvider.createDate(daysAgo: 1), box: .daily, id: 0)]
@@ -127,7 +127,20 @@ final class WSLeitnerTests: XCTestCase {
         session = leitner.next()
         XCTAssertNil(session)
         
-        dateProvider.now = Date().advanced(by: 72 * 60 * 60)
+        dateProvider.now = Date().advanced(by: .threeDays)
+        session = leitner.next()
+        XCTAssertEqual(session?.card.id, 0)
+    }
+    
+    func testMovingCardToNextBoxIsCorrect_whenFail() throws {
+        let dateProvider = TestDateProvider(now: Date())
+        
+        let initCards = [TestCard(reviewTime: dateProvider.createDate(daysAgo: 1), box: .daily, id: 0)]
+        
+        let leitner = Leitner<TestDelegate>(cards: initCards, now: dateProvider)
+        var session = leitner.next()
+        XCTAssertEqual(session?.card.id, 0)
+        session?.failure()
         session = leitner.next()
         XCTAssertEqual(session?.card.id, 0)
     }
@@ -175,6 +188,23 @@ final class WSLeitnerTests: XCTestCase {
         
         waitForExpectations(timeout: 0)
     }
+    
+    func testUpcomingCards() throws {
+        let dateProvider = TestDateProvider(now: Date())
+        let initCards = [TestCard(reviewTime: dateProvider.createDate(daysAgo: 1), box: .daily, id: 0),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 5), box: .each5Day, id: 1),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 25), box: .each25Day, id: 2),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 4), box: .learned, id: 3),
+                         TestCard(reviewTime: dateProvider.createDate(daysAgo: 10), box: .each10Day, id: 4)]
+        let leitner = Leitner<TestDelegate>(cards: initCards, now: dateProvider)
+        
+        let cards = leitner.upcomingCards(count: 3)
+        let next = try XCTUnwrap(leitner.next()?.card.id)
+        
+        
+        XCTAssertEqual(cards.map(\.id).first, next)
+        XCTAssertEqual(cards.map(\.id), [2, 4, 1])
+    }
 }
 
 private class TestDateProvider: CurrentDateProviding {
@@ -188,7 +218,7 @@ private class TestDateProvider: CurrentDateProviding {
     }
     
     func createDate(daysAgo n: Double) -> Date{
-        now.advanced(by: -n * 24 * 60 * 60)
+        now.advanced(by: -n * .oneDay)
     }
 }
 
@@ -208,5 +238,14 @@ private class TestDelegate: LeitnerCardDelegate {
     
     func update(card: TestCard) {
         callback(card)
+    }
+}
+
+extension TimeInterval {
+    static var oneDay: Self {
+        24 * 60 * 60
+    }
+    static var threeDays: Self {
+        72 * 60 * 60
     }
 }

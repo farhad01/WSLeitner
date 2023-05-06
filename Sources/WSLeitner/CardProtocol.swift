@@ -11,32 +11,42 @@ public enum Box: Int16, CaseIterable {
     case each10Day
     case each25Day
     case learned
+    
+    static var learningBoxes: [Box] {
+        Self.allCases.filter {$0 != .learned}.reversed()
+    }
 }
 
 public protocol CardProtocol: Identifiable, Comparable {
     var reviewTime: Date {get set}
     var box: Box {get set}
 }
+
 public extension CardProtocol {
+    
     static func < (lhs: Self, rhs: Self) -> Bool {
         lhs.reviewTime > rhs.reviewTime
     }
+    
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
-extension Box {
+public extension Box {
     var duration: TimeInterval {
-        let oneHour = TimeInterval(24 * 60 * 60)
+        let day = TimeInterval(24 * 60 * 60)
         switch self {
         case .daily:
-            return oneHour
+            return day
         case .each3Day:
-            return 3 * oneHour
+            return 3 * day
         case .each5Day:
-            return 5 * oneHour
+            return 5 * day
         case .each10Day:
-            return 10 * oneHour
+            return 10 * day
         case .each25Day:
-            return 25 * oneHour
+            return 25 * day
         case .learned:
             return 0
         }

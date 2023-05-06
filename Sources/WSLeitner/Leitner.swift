@@ -30,21 +30,23 @@ public final class Leitner<Delegate: LeitnerCardDelegate> {
     }
     
     public func next() -> LeitnerSession<Card>? {
-        let boxTypes: [Box] = [.each25Day, .each10Day, .each5Day, .each3Day, .daily]
-        for type in boxTypes {
-            if let iterator = boxes[type]?.makeIterator(),
-               let card = iterator.next(),
-               let successList = boxes[type.next],
-               let failList = boxes[.daily],
-               card.reviewTime <= currentDateProviding.now.advanced(by: -type.duration) || type == .daily {
+        
+        
+            if
+                let card = upcomingCards(count: 1).first,
+                let successList = boxes[card.box.next],
+                let failList = boxes[.daily],
+                let cardList = boxes[card.box],
+                card.reviewTime <= currentDateProviding.now.advanced(by: -card.box.duration) || card.box == .daily {
+                
                 return LeitnerSession(
                     card: card) { [currentDateProviding, weak delegate] in
                         var card = card
-                        card.box = type.next
+                        card.box = card.box.next
                         card.reviewTime = currentDateProviding.now
                         
                         delegate?.update(card: card)
-                        iterator.remove()
+                        cardList.remove(card)
                         successList.insert(card)
                     } onFail: { [currentDateProviding, weak delegate] in
                         var card = card
@@ -52,12 +54,28 @@ public final class Leitner<Delegate: LeitnerCardDelegate> {
                         card.reviewTime = currentDateProviding.now
                         
                         delegate?.update(card: card)
-                        iterator.remove()
+                        cardList.remove(card)
                         failList.insert(card)
                     }
             }
-        }
+        
         return nil
+    }
+    
+    public func upcomingCards(count: Int) -> [Card] {
+        var cards = [Card]()
+    main: for box in Box.learningBoxes {
+        if let iterator = boxes[box] {
+            for card in iterator {
+                if card.reviewTime <= currentDateProviding.now.advanced(by: -box.duration) || box == .daily {
+                    cards.append(card)
+                    if cards.count == count {break main}
+                }
+                
+            }
+        }
+    }
+        return cards
     }
 }
 
